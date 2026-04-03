@@ -24,6 +24,12 @@ const Index = () => {
     <div className="h-screen w-screen overflow-hidden">
       <BondrHeader mode={mode} onModeChange={setMode} activeUsers={activeUsers} />
 
+      {/* Map fills entire screen behind everything */}
+      <div className="absolute inset-0 pt-12 md:pt-14">
+        <BusMap buses={buses} />
+      </div>
+
+      {/* Panels render as bottom sheets on mobile, sidebars on desktop */}
       {mode === 'traveler' && (
         <TravelerPanel
           isTracking={isTracking}
@@ -33,10 +39,6 @@ const Index = () => {
       )}
 
       {mode === 'map' && <MapPanel buses={buses} />}
-
-      <div className="absolute inset-0 pt-14">
-        <BusMap buses={buses} />
-      </div>
     </div>
   );
 };
