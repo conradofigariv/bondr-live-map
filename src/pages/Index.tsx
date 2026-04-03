@@ -1,16 +1,44 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { BondrHeader } from '@/components/BondrHeader';
+import { TravelerPanel } from '@/components/TravelerPanel';
+import { MapPanel } from '@/components/MapPanel';
+import { BusMap } from '@/components/BusMap';
+import { useMockBuses } from '@/hooks/useMockBuses';
+import type { AppMode, BusCompany } from '@/types/bus';
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
+  const [mode, setMode] = useState<AppMode>('map');
+  const [isTracking, setIsTracking] = useState(false);
+  const { buses, activeUsers } = useMockBuses();
+
+  const handleStartTrip = (company: BusCompany, line: string) => {
+    setIsTracking(true);
+    console.log(`Started trip: ${company} ${line}`);
+  };
+
+  const handleStopTrip = () => {
+    setIsTracking(false);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="h-screen w-screen overflow-hidden">
+      <BondrHeader mode={mode} onModeChange={setMode} activeUsers={activeUsers} />
+
+      {mode === 'traveler' && (
+        <TravelerPanel
+          isTracking={isTracking}
+          onStartTrip={handleStartTrip}
+          onStopTrip={handleStopTrip}
+        />
+      )}
+
+      {mode === 'map' && <MapPanel buses={buses} />}
+
+      <div className="absolute inset-0 pt-14">
+        <BusMap buses={buses} />
+      </div>
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
