@@ -1,5 +1,4 @@
-import { useRef, useState, useEffect, type ReactNode } from 'react';
-import { GripHorizontal } from 'lucide-react';
+import { useRef, useState, type ReactNode } from 'react';
 
 interface BottomSheetProps {
   children: ReactNode;
@@ -12,12 +11,10 @@ export function BottomSheet({ children, peekHeight = 72, maxHeight = '70vh' }: B
   const [expanded, setExpanded] = useState(false);
   const [dragging, setDragging] = useState(false);
   const startY = useRef(0);
-  const startExpanded = useRef(false);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setDragging(true);
     startY.current = e.touches[0].clientY;
-    startExpanded.current = expanded;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -36,7 +33,7 @@ export function BottomSheet({ children, peekHeight = 72, maxHeight = '70vh' }: B
   return (
     <div
       ref={sheetRef}
-      className="fixed bottom-0 left-0 right-0 z-[1001] bondr-glass rounded-t-2xl transition-all duration-300 ease-out"
+      className="fixed bottom-0 left-0 right-0 z-[1001] bg-[#1a1a22]/95 backdrop-blur-xl rounded-t-2xl transition-all duration-300 ease-out border-t border-white/[0.06]"
       style={{
         height: expanded ? maxHeight : `${peekHeight}px`,
         maxHeight,
@@ -44,15 +41,15 @@ export function BottomSheet({ children, peekHeight = 72, maxHeight = '70vh' }: B
     >
       {/* Drag handle */}
       <div
-        className="flex items-center justify-center py-2 cursor-grab active:cursor-grabbing touch-none"
+        className="flex items-center justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onClick={handleClick}
       >
-        <div className="w-10 h-1 rounded-full bg-muted-foreground/40" />
+        <div className="w-10 h-1 rounded-full bg-white/20" />
       </div>
 
-      <div className="overflow-y-auto" style={{ height: 'calc(100% - 24px)' }}>
+      <div className="overflow-y-auto scrollbar-thin" style={{ height: 'calc(100% - 28px)' }}>
         {children}
       </div>
     </div>

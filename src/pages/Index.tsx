@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { BondrHeader } from '@/components/BondrHeader';
 import { TravelerPanel } from '@/components/TravelerPanel';
 import { MapPanel } from '@/components/MapPanel';
@@ -7,10 +7,11 @@ import { useTracking } from '@/hooks/useTracking';
 import { useBuses } from '@/hooks/useBuses';
 import { useMockBuses } from '@/hooks/useMockBuses';
 import { supabase } from '@/lib/supabase';
-import type { AppMode, BusCompany } from '@/types/bus';
+import type { AppMode, Bus, BusCompany } from '@/types/bus';
 
 const Index = () => {
   const [mode, setMode] = useState<AppMode>('map');
+  const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
   const tracking = useTracking();
 
   // Use real Supabase data when configured, otherwise fall back to mock
@@ -26,7 +27,7 @@ const Index = () => {
       return buses;
     }
 
-    const currentBus = {
+    const currentBus: Bus = {
       id: tracking.sessionId,
       line: tracking.currentLine,
       company: tracking.currentCompany,
@@ -36,12 +37,17 @@ const Index = () => {
       isCurrentUser: true,
     };
 
-    // Replace if already exists, otherwise add
     const filtered = buses.filter(b => b.id !== tracking.sessionId);
     return [currentBus, ...filtered];
   }, [buses, tracking]);
 
-  const flyTarget = useMemo<[number, number] | null>(() => {
+  // Fly to bus when clicked in sidebar
+  const handleBusClick = useCallback((bus: Bus) => {
+    setFlyTarget([bus.lat, bus.lng]);
+  }, []);
+
+  // Fly to user when tracking starts
+  const trackingFlyTarget = useMemo<[number, number] | null>(() => {
     if (tracking.isTracking && tracking.lat && tracking.lng) {
       return [tracking.lat, tracking.lng];
     }
@@ -54,15 +60,16 @@ const Index = () => {
 
   const handleStopTrip = () => {
     tracking.stop();
+    setFlyTarget(null);
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden">
+    <div className="h-screen w-screen overflow-hidden bg-[#0c0c0f]">
       <BondrHeader mode={mode} onModeChange={setMode} activeUsers={activeUsers} />
 
       {/* Map fills entire screen behind everything */}
-      <div className="absolute inset-0 pt-12 md:pt-14">
-        <BusMap buses={allBuses} flyTarget={flyTarget} />
+      <div className="absolute inset-0 pt-14">
+        <BusMap buses={allBuses} flyTarget={flyTarget || trackingFlyTarget} />
       </div>
 
       {/* Panels render as bottom sheets on mobile, sidebars on desktop */}
@@ -74,20 +81,20 @@ const Index = () => {
         />
       )}
 
-      {mode === 'map' && <MapPanel buses={allBuses} />}
+      {mode === 'map' && <MapPanel buses={allBuses} onBusClick={handleBusClick} />}
 
       {/* Status bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-[999] h-6 bg-card/90 backdrop-blur border-t border-border flex items-center justify-between px-3 text-[10px] font-mono text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${isLive ? (realBuses.connected ? 'bg-green-500' : 'bg-yellow-500') : 'bg-yellow-500'}`} />
-          {isLive ? (realBuses.connected ? 'Conectado' : 'Reconectando…') : 'Demo (sin Supabase)'}
+      <div className="fixed bottom-0 left-0 right-0 z-[999] h-7 bg-[#1a1a22]/90 backdrop-blur-sm border-t border-white/[0.04] flex items-center justify-between px-4 text-[10px] font-mono text-white/30">
+        <div className="flex items-center gap-2">
+          <span className={`w-1.5 h-1.5 rounded-full ${isLive ? (realBuses.connected ? 'bg-[#22c55e]' : 'bg-yellow-500') : 'bg-yellow-500'}`} />
+          {isLive ? (realBuses.connected ? 'Conectado' : 'Reconectando...') : 'Demo (sin Supabase)'}
         </div>
         <span>{allBuses.length} bondis activos</span>
       </div>
 
       {/* Tracking error toast */}
       {tracking.error && (
-        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[1100] bg-destructive text-destructive-foreground px-4 py-2 rounded-md text-sm font-medium shadow-lg">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[1100] bg-red-500/20 text-red-400 border border-red-500/30 px-5 py-3 rounded-xl text-sm font-medium shadow-2xl backdrop-blur-sm">
           {tracking.error}
         </div>
       )}
